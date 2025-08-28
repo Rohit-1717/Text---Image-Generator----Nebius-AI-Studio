@@ -9,10 +9,10 @@ import Faqs from "../faqs/Faqs";
 import Call_To_Action from "../call_to_action/Call_To_Action";
 
 const menuItems = [
-  { name: "Features", href: "#" },
-  { name: "Use Cases", href: "#" },
-  { name: "Pricing", href: "#" },
-  { name: "About", href: "#" },
+  { name: "Features", href: "/features" },
+  { name: "Use Cases", href: "/use-cases" },
+  { name: "Pricing", href: "/pricing" },
+  { name: "About", href: "/about" },
 ];
 
 export default function HeroSection() {
@@ -69,13 +69,13 @@ export default function HeroSection() {
 
                 <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit lg:border-l lg:pl-6">
                   <Button asChild variant="outline" size="sm">
-                    <a href="#">
+                    <a href="/login">
                       <span>Login</span>
                     </a>
                   </Button>
 
                   <Button asChild size="sm">
-                    <a href="#">
+                    <a href="/signup">
                       <span>Get Started</span>
                     </a>
                   </Button>
@@ -154,8 +154,7 @@ export default function HeroSection() {
                 <div className="bg-radial-[at_65%_25%] to-background z-1 -inset-17 absolute from-transparent to-40%"></div>
                 <img
                   className="hidden dark:block"
-                  src="/music1.webp"
-                  // src="/music.webp"
+                  src="/image1.webp"
                   alt="app illustration"
                   width={2796}
                   height={2008}

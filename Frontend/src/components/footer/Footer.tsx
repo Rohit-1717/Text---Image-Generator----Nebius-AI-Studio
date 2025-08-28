@@ -1,8 +1,8 @@
 const links: { title: string; href: string }[] = [
-  { title: "Features", href: "#" },
-  { title: "Use Cases", href: "#" },
-  { title: "Pricing", href: "#" },
-  { title: "About", href: "#" },
+  { title: "Features", href: "/features" },
+  { title: "Use Cases", href: "/use-cases" },
+  { title: "Pricing", href: "/pricing" },
+  { title: "About", href: "/about" },
 ];
 
 export default function Footer() {
