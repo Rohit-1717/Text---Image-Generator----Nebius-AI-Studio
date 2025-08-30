@@ -1,43 +1,64 @@
 import express from "express";
 import cors from "cors";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
+
+import { securityMiddlewares } from "./middlewares/security.middleware.js";
+import { globalLimiter } from "./middlewares/rateLimiters.js";
+import passport from "./config/passport.js";
+
+import authRoutes from "./routes/auth.routes.js";
+import generateImage from "./routes/generateRoute.js";
 
 import { errorHandler } from "./middlewares/error.middleware.js";
 
+
 const app = express();
 
-// CORS configuration
+// Parse cookies
+app.use(cookieParser());
+
+
+// Trust proxy (needed for secure cookies behind proxies)
+if (process.env.TRUST_PROXY) app.set("trust proxy", parseInt(process.env.TRUST_PROXY));
+
+// CORS
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173", // frontend URL
-    // credentials: true,
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    credentials: true, // allow cookies
   })
 );
 
-// Parse incoming JSON requests
-app.use(
-  express.json({
-    limit: "16kb",
-  })
-);
+// Logging (avoid logging bodies on auth)
+if (process.env.NODE_ENV !== "test") app.use(morgan("tiny"));
 
-// Parse URL-encoded data (form submissions)
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: "16kb",
-  })
-);
+app.use(compression());
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(cookieParser());
 
-app.use(errorHandler);
+// Security hardening
+securityMiddlewares(app);
 
-// Serve static files (e.g., for uploaded files or public assets)
+// Global rate limit
+app.use(globalLimiter);
+
+// Passport init (no sessions)
+app.use(passport.initialize());
+
+// Static
 app.use(express.static("public"));
 
-import generateImage from "./routes/generateRoute.js";
+// Routes
+app.get("/", (req, res) => res.send("🧠 ImageAI Server is Running"));
+app.use("/api/auth", authRoutes);
 app.use("/api", generateImage);
 
-app.get("/", (req, res) => {
-  res.send("🧠 ImageAI Server is Running");
-});
+// Error handler LAST
+app.use(errorHandler);
+
+
 
 export { app };
