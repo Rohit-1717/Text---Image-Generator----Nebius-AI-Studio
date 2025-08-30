@@ -1,15 +1,46 @@
+"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
 import Footer from "@/components/footer/Footer";
 import NavBar from "@/components/nav/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import useAuthStore from "@/store/useAuthStore";
+
+// -------- Form Schema --------
+const loginSchema = z.object({
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const { login, loading } = useAuthStore();
+
+  const { register, handleSubmit } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    await login(data);
+    console.log("User LoggedIn Successfully...", data.email);
+  };
+
+  const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
+
   return (
     <>
       <NavBar />
       <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
-        <form action="" className="max-w-92 m-auto h-fit w-full">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="max-w-92 m-auto h-fit w-full"
+        >
           <div className="p-6">
             <div>
               <a href="/" aria-label="go home">
@@ -26,7 +57,13 @@ export default function Login() {
             </div>
 
             <div className="mt-6">
-              <Button type="button" variant="outline" className="w-full">
+              {/* Google OAuth */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={loginWithGoogle}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="0.98em"
@@ -57,7 +94,7 @@ export default function Login() {
             <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
               <hr className="border-dashed" />
               <span className="text-muted-foreground text-xs">
-                Or continue With
+                Or continue with
               </span>
               <hr className="border-dashed" />
             </div>
@@ -65,18 +102,19 @@ export default function Login() {
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="block text-sm">
-                  Enter your prompt
+                  Enter your email
                 </Label>
-                <Input
-                  type="text"
-                  required
-                  name="prompt"
-                  id="prompt"
-                  placeholder="Enter Your Email..."
-                />
+                <Input type="email" {...register("email")} />
               </div>
-
-              <Button className="w-full">Login</Button>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="block text-sm">
+                  Password
+                </Label>
+                <Input type="password" {...register("password")} />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Logging in..." : "Login"}
+              </Button>
             </div>
           </div>
 
