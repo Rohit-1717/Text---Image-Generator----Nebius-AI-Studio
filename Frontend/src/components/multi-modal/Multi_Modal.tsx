@@ -15,11 +15,6 @@ export default function Multi_Modal() {
             {/* Outer Circle Logos */}
             <div className="bg-linear-to-b from-muted-foreground/15 absolute inset-0 flex aspect-square items-center justify-center rounded-full border-t to-transparent to-25%">
               <IntegrationCard className="-translate-x-1/6 absolute left-0 top-1/4 -translate-y-1/4">
-                {/* <img
-                  src="/logos/gemini.png"
-                  alt="Gemini"
-                  className="w-10 h-10"
-                /> */}
                 <svg
                   width="250"
                   height="250"

@@ -5,8 +5,15 @@ import { toast } from "sonner";
 axios.defaults.withCredentials = true;
 const API_URL = import.meta.env.VITE_API_URL;
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string; // 👈 optional avatar from Google OAuth
+}
+
 interface AuthState {
-  user: { id: string; name: string; email: string } | null;
+  user: User | null;
   loading: boolean;
   error: string | null;
   register: (data: {
@@ -16,8 +23,8 @@ interface AuthState {
   }) => Promise<void>;
   login: (data: { email: string; password: string }) => Promise<void>;
   loginWithGoogle: () => void;
-  fetchMe: () => Promise<void>;
   logout: () => Promise<void>;
+  fetchMe: () => Promise<void>;
 }
 
 const useAuthStore = create<AuthState>((set) => ({
@@ -53,10 +60,13 @@ const useAuthStore = create<AuthState>((set) => ({
 
   fetchMe: async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/me`);
+      set({ loading: true });
+      const res = await axios.get<{ user: User }>(`${API_URL}/api/auth/me`);
       set({ user: res.data.user });
-    } catch {
+    } catch (err) {
       set({ user: null });
+    } finally {
+      set({ loading: false });
     }
   },
 

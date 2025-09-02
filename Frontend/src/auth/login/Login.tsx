@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,18 +22,24 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
-  const { login, loading } = useAuthStore();
+  const { login, loginWithGoogle, loading, user } = useAuthStore();
+  const navigate = useNavigate();
 
   const { register, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
+  // 🔥 Redirect once user is set
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
   const onSubmit = async (data: LoginFormData) => {
     await login(data);
-    console.log("User LoggedIn Successfully...", data.email);
+    // no manual navigate — useEffect will handle it
   };
-
-  const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
 
   return (
     <>
