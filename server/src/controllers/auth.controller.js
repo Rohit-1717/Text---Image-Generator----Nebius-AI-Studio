@@ -98,6 +98,6 @@ export const authGoogleCallback = (req, res, next) => {
     });
 
     // Respond with JSON instead of redirect
-    return res.json({ success: true, user: { id: user._id, name: user.name, email: user.email } });
+    return  res.redirect(process.env.FRONTEND_URL + "/dashboard");
   })(req, res, next);
 };
