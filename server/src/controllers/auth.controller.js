@@ -1,4 +1,5 @@
 import passport from "../config/passport.js";
+import transporter from "../lib/nodemailer.js";
 import User from "../models/User.model.js";
 import { signToken } from "../utils/jwt.js";
 
@@ -22,6 +23,7 @@ export const register = async (req, res) => {
     return res.status(409).json({ message: "Email already registered" });
 
   const user = await User.create({ name, email, password });
+  welcomeMail({ name, email });
 
   const token = signToken({ id: user._id, email: user.email });
   setAuthCookie(res, token);
@@ -63,31 +65,17 @@ export const authGoogle = passport.authenticate("google", {
   session: false,
 });
 
-// export const authGoogleCallback = (req, res, next) => {
-//   passport.authenticate("google", { session: false }, (err, user) => {
-//     if (err) return next(err);
-//     if (!user) return res.redirect(`${process.env.FRONTEND_URL}/auth/fail`);
-
-//     const token = signToken({ id: user._id, email: user.email });
-//     setAuthCookie(res, token);
-
-//     return res.send(`
-//   <html>
-//     <body>
-//       <script>
-//         window.location.href = "${process.env.FRONTEND_URL}/dashboard";
-//       </script>
-//     </body>
-//   </html>
-// `);
-//   })(req, res, next);
-// };
-
-
 export const authGoogleCallback = (req, res, next) => {
-  passport.authenticate("google", { session: false }, (err, user) => {
+  passport.authenticate("google", { session: false }, async (err, user) => {
     if (err) return next(err);
     if (!user) return res.status(401).json({ message: "OAuth failed" });
+
+    // ✅ Send welcome mail if new user
+    if (user.isNew) {
+      welcomeMail({ name: user.name, email: user.email }).catch((err) =>
+        console.error("Failed to send welcome email:", err)
+      );
+    }
 
     const token = signToken({ id: user._id, email: user.email });
     res.cookie(cookieName, token, {
@@ -97,7 +85,45 @@ export const authGoogleCallback = (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Respond with JSON instead of redirect
-    return  res.redirect(process.env.FRONTEND_URL + "/dashboard");
+    return res.redirect(process.env.FRONTEND_URL + "/dashboard");
   })(req, res, next);
+};
+
+export const welcomeMail = async ({ name, email }) => {
+  try {
+    const mailOptions = {
+      from: '"Morphix AI" <no-reply@morphixai.com>',
+      to: email,
+      subject: `Welcome to Morphix AI, ${name}!`,
+      html: `
+      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
+        <div style="background: #4F46E5; padding: 20px; text-align: center; color: #fff;">
+          <img src="https://text-image-generator-nebius-v20.vercel.app/logo.webp" alt="Morphix AI Logo" width="100" style="margin-bottom: 10px;" />
+          <h1>Welcome to Morphix AI!</h1>
+        </div>
+        <div style="padding: 20px;">
+          <p>Hi <strong>${name}</strong>,</p>
+          <p>We’re excited to have you on board! Morphix AI is your one-stop platform to unleash creativity using AI. Here’s what you can explore:</p>
+          <ul>
+            <li>🎨 <strong>Text to Image</strong></li>
+            <li>🖼️ <strong>Image to Image</strong></li>
+            <li>🧊 <strong>Image to 3D Model</strong></li>
+            <li>🔤 <strong>Text to 3D Model</strong></li>
+            <li>🌐 <strong>Multi-modal Platform</strong> — One Platform, Endless Creations</li>
+          </ul>
+          <p>Explore a wide range of AI models from <strong>OpenAI, Google Gemini, xAI</strong>, and more. Generate stunning images effortlessly — all in one place!</p>
+          <p style="text-align: center; margin-top: 30px;">
+            <a href="https://text-image-generator-nebius-v20.vercel.app" style="background: #4F46E5; color: #fff; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold;">Get Started</a>
+          </p>
+          <p style="margin-top: 30px;">— The Morphix AI Team</p>
+        </div>
+      </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Welcome email sent to ${email}`);
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
+  }
 };

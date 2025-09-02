@@ -7,6 +7,8 @@ import useAuthStore from "@/store/useAuthStore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 // ✅ Validation schema
 const signupSchema = z.object({
@@ -20,7 +22,8 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const registerUser = useAuthStore((state) => state.register);
   const loading = useAuthStore((state) => state.loading);
-
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -29,6 +32,11 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
   });
 
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
   const onSubmit = (data: SignupFormData) => {
     registerUser(data);
   };

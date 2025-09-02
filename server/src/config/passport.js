@@ -4,9 +4,8 @@ dotenv.config();
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+
 import User from "../models/User.model.js";
-
-
 
 // Local strategy
 passport.use(
@@ -44,13 +43,18 @@ passport.use(
         let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
         if (!user) {
+          // ✅ New user
           user = await User.create({
             googleId,
             email,
             name: profile.displayName,
             avatar: profile.photos?.[0]?.value,
           });
+
+          // 🔑 Temporary flag so we know later
+          user.isNew = true;
         } else if (!user.googleId) {
+          // Link Google account to existing email signup
           user.googleId = googleId;
           await user.save();
         }
