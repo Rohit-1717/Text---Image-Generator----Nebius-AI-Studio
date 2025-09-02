@@ -27,7 +27,7 @@ if (process.env.TRUST_PROXY) app.set("trust proxy", parseInt(process.env.TRUST_P
 app.use(
   cors({
     origin: ["https://text-image-generator-nebius-v20.vercel.app","http://localhost:5173","https://text-image-generator-nebius-ai-stud.vercel.app"],
-    credentials: true, // allow cookies
+    credentials: true, 
   })
 );
 

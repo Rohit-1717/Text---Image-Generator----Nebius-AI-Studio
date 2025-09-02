@@ -8,8 +8,8 @@ const inProd = process.env.NODE_ENV === "production";
 const setAuthCookie = (res, token) => {
   res.cookie(cookieName, token, {
     httpOnly: true,
-    secure: inProd, // true in prod (HTTPS)
-    sameSite: "lax",
+    sameSite: inProd ? "none" : "lax",
+    secure: inProd,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
   });
 };
@@ -63,7 +63,6 @@ export const authGoogle = passport.authenticate("google", {
   session: false,
 });
 
-// Google callback → set cookie + redirect back to frontend
 export const authGoogleCallback = (req, res, next) => {
   passport.authenticate("google", { session: false }, (err, user) => {
     if (err) return next(err);
@@ -72,7 +71,6 @@ export const authGoogleCallback = (req, res, next) => {
     const token = signToken({ id: user._id, email: user.email });
     setAuthCookie(res, token);
 
-    // Avoid putting token in URL. Cookie is now set on API domain.
     return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
   })(req, res, next);
 };
