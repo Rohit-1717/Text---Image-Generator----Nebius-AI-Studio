@@ -63,22 +63,41 @@ export const authGoogle = passport.authenticate("google", {
   session: false,
 });
 
+// export const authGoogleCallback = (req, res, next) => {
+//   passport.authenticate("google", { session: false }, (err, user) => {
+//     if (err) return next(err);
+//     if (!user) return res.redirect(`${process.env.FRONTEND_URL}/auth/fail`);
+
+//     const token = signToken({ id: user._id, email: user.email });
+//     setAuthCookie(res, token);
+
+//     return res.send(`
+//   <html>
+//     <body>
+//       <script>
+//         window.location.href = "${process.env.FRONTEND_URL}/dashboard";
+//       </script>
+//     </body>
+//   </html>
+// `);
+//   })(req, res, next);
+// };
+
+
 export const authGoogleCallback = (req, res, next) => {
   passport.authenticate("google", { session: false }, (err, user) => {
     if (err) return next(err);
-    if (!user) return res.redirect(`${process.env.FRONTEND_URL}/auth/fail`);
+    if (!user) return res.status(401).json({ message: "OAuth failed" });
 
     const token = signToken({ id: user._id, email: user.email });
-    setAuthCookie(res, token);
+    res.cookie(cookieName, token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
-    return res.send(`
-  <html>
-    <body>
-      <script>
-        window.location.href = "${process.env.FRONTEND_URL}/dashboard";
-      </script>
-    </body>
-  </html>
-`);
+    // Respond with JSON instead of redirect
+    return res.json({ success: true, user: { id: user._id, name: user.name, email: user.email } });
   })(req, res, next);
 };

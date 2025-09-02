@@ -71,9 +71,9 @@ const useAuthStore = create<AuthState>((set) => ({
   },
 
   // 🔥 Google OAuth
-  loginWithGoogle: () => {
-    window.location.href = `${API_URL}/api/auth/google`;
-  },
+  loginWithGoogle: async () => {
+  window.open(`${API_URL}/api/auth/google`, "_self"); 
+},
 
   logout: async () => {
     await axios.post(`${API_URL}/api/auth/logout`);
