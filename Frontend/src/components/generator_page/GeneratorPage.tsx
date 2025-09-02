@@ -15,7 +15,7 @@ import useAuthStore from "@/store/useAuthStore";
 export default function GeneratorPage() {
   const { user } = useAuthStore();
   const [model, setModel] = useState("Gemini");
-  const [hasPrompt, setHasPrompt] = useState(false);
+  const [hasPrompt] = useState(false);
 
   // Extract only the first name (fallback to empty string if no user)
   const firstName = user?.name ? user.name.split(" ")[0] : "";
