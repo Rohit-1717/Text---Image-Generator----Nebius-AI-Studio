@@ -8,11 +8,11 @@ const inProd = process.env.NODE_ENV === "production";
 
 const setAuthCookie = (res, token) => {
   res.cookie(cookieName, token, {
-    httpOnly: true,
-    sameSite: "none", // allow frontend <> backend on diff domains
-    secure: inProd, // true in production
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", // false for localhost
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
 };
 
 export const register = async (req, res) => {
@@ -53,10 +53,7 @@ export const logout = async (req, res) => {
 };
 
 export const me = async (req, res) => {
-  const u = req.user;
-  res.json({
-    user: { id: u._id, name: u.name, email: u.email, avatar: u.avatar },
-  });
+  res.json({ user: req.user });
 };
 
 // Google entry (passport handles redirect)

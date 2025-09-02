@@ -17,17 +17,20 @@ export const requireAuth = async (req, res, next) => {
 
     const decoded = verifyToken(token);
 
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).select("-password");
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
     // Optional: invalidate if password changed after token
-    if (user.passwordChangedAt && decoded.iat * 1000 < user.passwordChangedAt.getTime()) {
+    if (
+      user.passwordChangedAt &&
+      decoded.iat * 1000 < user.passwordChangedAt.getTime()
+    ) {
       return res.status(401).json({ message: "Please login again" });
     }
 
     req.user = user;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid/expired token" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 };

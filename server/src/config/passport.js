@@ -43,19 +43,19 @@ passport.use(
         let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
         if (!user) {
-          // ✅ New user
+          // new user
           user = await User.create({
             googleId,
             email,
             name: profile.displayName,
             avatar: profile.photos?.[0]?.value,
           });
-
-          // 🔑 Temporary flag so we know later
           user.isNew = true;
-        } else if (!user.googleId) {
-          // Link Google account to existing email signup
-          user.googleId = googleId;
+        } else {
+          // existing user → always sync avatar and googleId
+          user.googleId = user.googleId || googleId;
+          user.avatar = profile.photos?.[0]?.value || user.avatar;
+          user.name = user.name || profile.displayName;
           await user.save();
         }
 

@@ -48,21 +48,26 @@ const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (data) => {
-  set({ loading: true, error: null });
-  try {
-    const res = await axios.post(`${API_URL}/api/auth/login`, data, {
-      withCredentials: true,
-    });
-    set({ user: res.data.user, loading: false });
-  } catch (err: any) {
-    set({ error: err.response?.data?.message || "Login failed", loading: false });
-  }
-},
+    set({ loading: true, error: null });
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/login`, data, {
+        withCredentials: true,
+      });
+      set({ user: res.data.user, loading: false });
+    } catch (err: any) {
+      set({
+        error: err.response?.data?.message || "Login failed",
+        loading: false,
+      });
+    }
+  },
 
   fetchMe: async () => {
     try {
       set({ loading: true });
-      const res = await axios.get<{ user: User }>(`${API_URL}/api/auth/me`);
+      const res = await axios.get<{ user: User }>(`${API_URL}/api/auth/me`, {
+        withCredentials: true, // 👈 force include cookie
+      });
       set({ user: res.data.user });
     } catch (err) {
       set({ user: null });
