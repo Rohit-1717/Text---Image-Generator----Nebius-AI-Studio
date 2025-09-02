@@ -32,16 +32,16 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
   });
 
-  useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
-    }
-  }, [user, navigate]);
   const onSubmit = (data: SignupFormData) => {
     registerUser(data);
   };
 
   const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   return (
     <>

@@ -11,10 +11,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-console.log("Email Host:", process.env.EMAIL_HOST);
-console.log("Email Port:", process.env.EMAIL_PORT);
-console.log("Email User:", process.env.EMAIL_USER);
-console.log("Email Pass:", process.env.EMAIL_PASS);
+// console.log("Email Host:", process.env.EMAIL_HOST);
+// console.log("Email Port:", process.env.EMAIL_PORT);
+// console.log("Email User:", process.env.EMAIL_USER);
+// console.log("Email Pass:", process.env.EMAIL_PASS);
 // Verify the connection configuration
 transporter.verify((error, success) => {
   if (error) {

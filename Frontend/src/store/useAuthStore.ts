@@ -33,30 +33,31 @@ const useAuthStore = create<AuthState>((set) => ({
   error: null,
 
   register: async (data) => {
+    set({ loading: true, error: null });
     try {
-      set({ loading: true, error: null });
-      const res = await axios.post(`${API_URL}/api/auth/register`, data);
+      const res = await axios.post(`${API_URL}/api/auth/register`, data, {
+        withCredentials: true,
+      });
       set({ user: res.data.user, loading: false });
-      toast.success("User Signup successfully 🎉");
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Register failed";
-      set({ error: msg, loading: false });
-      toast.error(msg); // ❌ toast
+      set({
+        error: err.response?.data?.message || "Signup failed",
+        loading: false,
+      });
     }
   },
 
   login: async (data) => {
-    try {
-      set({ loading: true, error: null });
-      const res = await axios.post(`${API_URL}/api/auth/login`, data);
-      set({ user: res.data.user, loading: false });
-      toast.success("User LoggedIn Successfully 🎉");
-    } catch (err: any) {
-      const msg = err.response?.data?.message || "Login failed";
-      set({ error: msg, loading: false });
-      toast.error(msg);
-    }
-  },
+  set({ loading: true, error: null });
+  try {
+    const res = await axios.post(`${API_URL}/api/auth/login`, data, {
+      withCredentials: true,
+    });
+    set({ user: res.data.user, loading: false });
+  } catch (err: any) {
+    set({ error: err.response?.data?.message || "Login failed", loading: false });
+  }
+},
 
   fetchMe: async () => {
     try {
@@ -72,8 +73,8 @@ const useAuthStore = create<AuthState>((set) => ({
 
   // 🔥 Google OAuth
   loginWithGoogle: async () => {
-  window.open(`${API_URL}/api/auth/google`, "_self"); 
-},
+    window.open(`${API_URL}/api/auth/google`, "_self");
+  },
 
   logout: async () => {
     await axios.post(`${API_URL}/api/auth/logout`);
