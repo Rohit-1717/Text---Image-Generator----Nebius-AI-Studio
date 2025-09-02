@@ -71,6 +71,14 @@ export const authGoogleCallback = (req, res, next) => {
     const token = signToken({ id: user._id, email: user.email });
     setAuthCookie(res, token);
 
-    return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+    return res.send(`
+  <html>
+    <body>
+      <script>
+        window.location.href = "${process.env.FRONTEND_URL}/dashboard";
+      </script>
+    </body>
+  </html>
+`);
   })(req, res, next);
 };
