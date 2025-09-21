@@ -81,6 +81,7 @@ app.use("/api/user", user);
 app.use("/api/sessions", sessionRoutes);
 
 // Devices Session Management
+app.use("/api/devices/sessions", deviceSessionRoutes);
 
 // Payment Routes
 // app.use("/api/subscription/payment",paymentRoutes)

@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useNavigate } from "react-router-dom"; // ✅ navigation
+import { useNavigate } from "react-router-dom"; 
 import useSessionStore from "@/store/useSessionStore";
 
 export const SecurityTab: React.FC = () => {
