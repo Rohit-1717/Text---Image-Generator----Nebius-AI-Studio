@@ -2,17 +2,53 @@ import passport from "../config/passport.js";
 import transporter from "../lib/nodemailer.js";
 import User from "../models/User.model.js";
 import { signToken } from "../utils/jwt.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/apiError.js";
+import crypto from "crypto";
+import useragent from "useragent";
+import Session from "../models/Session.model.js";
+import { v4 as uuidv4 } from "uuid";
 
 const cookieName = process.env.JWT_COOKIE_NAME || "aid";
 const inProd = process.env.NODE_ENV === "production";
 
 const setAuthCookie = (res, token) => {
   res.cookie(cookieName, token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // false for localhost
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-});
+    httpOnly: true,
+    secure: inProd,
+    sameSite: inProd ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+};
+
+// Helper to create a session + JWT
+
+const createSessionAndToken = async (req, user) => {
+  const agent = useragent.parse(req.headers["user-agent"]);
+
+  // generate sessionId + token
+  const sessionId = uuidv4();
+  const rawToken = crypto.randomBytes(32).toString("hex");
+
+  const session = await Session.create({
+    userId: user._id,
+    sessionId,
+    token: rawToken,
+    userAgent: req.headers["user-agent"] || "",
+    device: agent.device.toString(),
+    browser: agent.toAgent(),
+    ip: req.ip,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+
+  // create JWT that embeds user + sessionId
+  const jwtToken = signToken({
+    id: user._id,
+    email: user.email,
+    sessionId: session.sessionId,
+  });
+
+  return { token: jwtToken, session };
 };
 
 export const register = async (req, res) => {
@@ -25,7 +61,8 @@ export const register = async (req, res) => {
   const user = await User.create({ name, email, password });
   welcomeMail({ name, email });
 
-  const token = signToken({ id: user._id, email: user.email });
+  const { token } = await createSessionAndToken(req, user);
+
   setAuthCookie(res, token);
 
   res.json({
@@ -34,22 +71,40 @@ export const register = async (req, res) => {
 };
 
 export const loginLocal = (req, res, next) => {
-  passport.authenticate("local", { session: false }, (err, user, info) => {
-    if (err) return next(err);
-    if (!user)
-      return res.status(401).json({ message: info?.message || "Unauthorized" });
+  passport.authenticate(
+    "local",
+    { session: false },
+    async (err, user, info) => {
+      if (err) return next(err);
+      if (!user)
+        return res
+          .status(401)
+          .json({ message: info?.message || "Unauthorized" });
 
-    const token = signToken({ id: user._id, email: user.email });
-    setAuthCookie(res, token);
-    res.json({
-      user: { id: user._id, name: user.name, email: user.email },
-    });
-  })(req, res, next);
+      const { token } = await createSessionAndToken(req, user);
+
+      setAuthCookie(res, token);
+
+      res.json({
+        user: { id: user._id, name: user.name, email: user.email },
+      });
+    }
+  )(req, res, next);
 };
 
 export const logout = async (req, res) => {
+  if (req.session?._id) {
+    await Session.deleteOne({ _id: req.session._id }); // ✅ delete current session
+  }
   res.clearCookie(cookieName);
   res.json({ message: "Logged out" });
+};
+
+// 🚀 Logout from all devices
+export const logoutAll = async (req, res) => {
+  await Session.deleteMany({ userId: req.user._id });
+  res.clearCookie(cookieName);
+  res.json({ message: "Logged out from all devices" });
 };
 
 export const me = async (req, res) => {
@@ -67,14 +122,14 @@ export const authGoogleCallback = (req, res, next) => {
     if (err) return next(err);
     if (!user) return res.status(401).json({ message: "OAuth failed" });
 
-    // ✅ Send welcome mail if new user
     if (user.isNew) {
       welcomeMail({ name: user.name, email: user.email }).catch((err) =>
         console.error("Failed to send welcome email:", err)
       );
     }
 
-    const token = signToken({ id: user._id, email: user.email });
+    const { token } = await createSessionAndToken(req, user);
+
     res.cookie(cookieName, token, {
       httpOnly: true,
       secure: true,
@@ -85,7 +140,6 @@ export const authGoogleCallback = (req, res, next) => {
     return res.redirect(process.env.FRONTEND_URL + "/dashboard");
   })(req, res, next);
 };
-
 export const welcomeMail = async ({ name, email }) => {
   try {
     const mailOptions = {
@@ -124,3 +178,82 @@ export const welcomeMail = async ({ name, email }) => {
     console.error("Error sending welcome email:", error);
   }
 };
+
+export const sendVerificationEmail = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (user.emailVerified) {
+    return res.status(400).json({ message: "Email already verified" });
+  }
+
+  // Generate token
+  const token = crypto.randomBytes(32).toString("hex");
+  user.verificationToken = token;
+  user.verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h expiry
+  await user.save();
+
+  // Send verification email
+  await transporter.sendMail({
+    from: '"Morphix AI" <no-reply@morphixai.com>',
+    to: user.email,
+    subject: `Verify Your Email, ${user.name}!`,
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 600px; margin: auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
+        <!-- Header -->
+        <div style="background: #4F46E5; padding: 20px; text-align: center; color: #fff;">
+          <img src="https://text-image-generator-nebius-v20.vercel.app/logo.webp" alt="Morphix AI Logo" width="100" style="margin-bottom: 10px;" />
+          <h1>Verify Your Email</h1>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 20px;">
+          <p>Hi <strong>${user.name}</strong>,</p>
+          <p>Thanks for joining Morphix AI! Before you start exploring, please verify your email by clicking the button below:</p>
+
+          <!-- Verification button -->
+          <p style="text-align: center; margin-top: 30px;">
+            <a href="${process.env.BACKEND_URL}/api/auth/email/verify/${token}" target="_blank" style="background: #4F46E5; color: #fff; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; display: inline-block;">
+              Verify Email
+            </a>
+          </p>
+
+          <p style="margin-top: 30px;">If you didn’t create an account, you can safely ignore this email.</p>
+
+          <p style="margin-top: 30px;">— The Morphix AI Team</p>
+        </div>
+      </div>
+    `,
+  });
+
+  res.status(200).json({ message: "Verification email sent" });
+});
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  // Aggregation ensures comparison works correctly
+  const [user] = await User.aggregate([
+    { $match: { verificationToken: token } },
+    {
+      $addFields: {
+        expiryValid: { $gt: ["$verificationTokenExpiry", new Date()] },
+      },
+    },
+    { $match: { expiryValid: true } },
+    { $limit: 1 },
+  ]);
+
+  if (!user) throw new ApiError(400, "Invalid or expired token");
+
+  // Update user using _id
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: { emailVerified: true },
+      $unset: { verificationToken: "", verificationTokenExpiry: "" },
+    }
+  );
+
+  return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+});

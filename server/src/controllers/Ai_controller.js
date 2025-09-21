@@ -1,45 +1,119 @@
-import OpenAI from "openai";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
-import dotenv from "dotenv";
+import GeneratedImage from "../models/generatedImage.model.js";
+export const generateImage = () => {
+  res.redirect(`http://localhost:5173/`);
+};
 
-dotenv.config({
-  path: "",
-});
+export const getAllGeneratedImages = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
 
-const client = new OpenAI({
-  baseURL: process.env.baseURL,
-  apiKey: process.env.NEBIUS_API_KEY,
-});
-
-export const generateImage = asyncHandler(async (req, res) => {
-  const { prompt } = req.body;
-
-  if (!prompt || typeof prompt !== "string") {
-    throw new ApiError(400, "Prompt is required and must be a string");
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized: User not found");
   }
 
-  const response = await client.images.generate({
-    model: "black-forest-labs/flux-dev",
-    response_format: "url", // 👈 returning direct URL
-    response_extension: "png",
-    width: 1024,
-    height: 1024,
-    num_inference_steps: 28,
-    negative_prompt: "",
-    seed: -1,
-    loras: null,
-    prompt,
+  const images = await GeneratedImage.find({ user: userId }).sort({
+    createdAt: -1,
   });
 
-  const imageUrl = response?.data?.[0]?.url;
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, { images }, "Generated images fetched successfully")
+    );
+});
 
-  if (!imageUrl) {
-    throw new ApiError(500, "Failed to generate image from Nebius");
+export const getImageTabs = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  // Fetch all user images, most recent first
+  const images = await GeneratedImage.find({ user: userId }).sort({
+    createdAt: -1,
+  });
+
+  // Group images by date
+  const grouped = {}; // { "YYYY-MM-DD": [images] }
+  images.forEach((img) => {
+    const date = img.createdAt.toISOString().split("T")[0];
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(img);
+  });
+
+  // Determine today's date string
+  const today = new Date().toISOString().split("T")[0];
+
+  // Create tabs: split into batches of 40
+  const tabs = [];
+  Object.entries(grouped).forEach(([date, imgs]) => {
+    const numBatches = Math.ceil(imgs.length / 40);
+    for (let i = 0; i < numBatches; i++) {
+      tabs.push({
+        id: `${date}-${i + 1}`,
+        label:
+          i === 0 ? (date === today ? "Today" : date) : `${date} #${i + 1}`,
+        date,
+        type: date === today ? "new" : "history",
+        imageCount: imgs.length,
+      });
+    }
+  });
+
+  res.status(200).json({ tabs });
+});
+
+export const deleteGeneratedImage = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { imageId } = req.params;
+
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized: User not found");
+  }
+
+  const image = await GeneratedImage.findOne({ _id: imageId, user: userId });
+  if (!image) {
+    throw new ApiError(404, "Image not found");
+  }
+
+  await image.deleteOne();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, null, "Image deleted successfully"));
+});
+
+export const deleteAllGeneratedImages = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized: User not found");
+  }
+
+  await GeneratedImage.deleteMany({ user: userId });
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, null, "All generated images deleted successfully")
+    );
+});
+
+export const getLastGeneratedImage = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized: User not found");
+  }
+
+  const lastImage = await GeneratedImage.findOne({ user: userId }).sort({
+    createdAt: -1,
+  });
+
+  if (!lastImage) {
+    throw new ApiError(404, "No generated images found");
   }
 
   res
     .status(200)
-    .json(new ApiResponse(200, { imageUrl }, "Image generated successfully"));
+    .json(new ApiResponse(200, { lastImage }, "Last generated image fetched"));
 });

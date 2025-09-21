@@ -11,6 +11,14 @@ import passport from "./config/passport.js";
 import authRoutes from "./routes/auth.routes.js";
 
 import generateImage from "./routes/generateRoute.js";
+import user from "./routes/user.routes.js";
+
+import image_generator from "./routes/ai.model.routes.js";
+import image_download from "./routes/image.format.routes.js";
+import sessionRoutes from "./routes/generationSession.routes.js";
+import deviceSessionRoutes from "./routes/sessions.routes.js";
+import supportRoute from "./routes/support.route.js"
+// import paymentRoutes from "./routes/payment.route.js"
 
 import { errorHandler } from "./middlewares/error.middleware.js";
 
@@ -59,6 +67,27 @@ app.use(express.static("public"));
 app.get("/", (req, res) => res.send("🧠 Morphix Server is Running"));
 app.use("/api/auth", authRoutes);
 app.use("/api", generateImage);
+
+// Download Image with formats
+app.use("/api", image_download);
+
+// Nebius Image Generator
+app.use("/api", image_generator);
+
+// User Routes
+app.use("/api/user", user);
+
+// Image Generation Session
+app.use("/api/sessions", sessionRoutes);
+
+// Devices Session Management
+
+// Payment Routes
+// app.use("/api/subscription/payment",paymentRoutes)
+
+// Support Routes
+app.use("/api/support", supportRoute);
+
 
 // Error handler LAST
 app.use(errorHandler);

@@ -6,6 +6,8 @@ import {
   me,
   authGoogle,
   authGoogleCallback,
+  sendVerificationEmail,
+  verifyEmail,
 } from "../controllers/auth.controller.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { registerSchema, loginSchema } from "../schemas/auth.schema.js";
@@ -26,6 +28,12 @@ router.get("/google/callback", authGoogleCallback);
 
 // Current user
 router.get("/me", requireAuth, (req, res) => me(req, res));
+
+// Send verification email (resend)
+router.post("/email/send-verification", requireAuth, sendVerificationEmail);
+
+// Verify email with token
+router.get("/email/verify/:token", verifyEmail);
 
 // Logout
 router.post("/logout", requireAuth, logout);
