@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PromptInput from "../prompt_Input/PromptInput";
 import {
   Select,
@@ -11,14 +9,35 @@ import {
 } from "@/components/ui/select";
 
 import useAuthStore from "@/store/useAuthStore";
+import GeneratedImages from "../generatedIimages/GeneratedImages";
+import VerifyEmail from "../verifyEMail/VerifyEmail";
+import { useApiStore } from "@/store/useApiStore";
 
-export default function GeneratorPage() {
+interface GeneratorPageProps {
+  activeSession: string | null;
+  setActiveSession: (sessionId: string | null) => void;
+}
+
+export default function GeneratorPage({
+  activeSession,
+  setActiveSession,
+}: GeneratorPageProps) {
   const { user } = useAuthStore();
-  const [model, setModel] = useState("Gemini");
-  const [hasPrompt] = useState(false);
+  const [model, setModel] = useState("gemini-ai");
 
-  // Extract only the first name (fallback to empty string if no user)
   const firstName = user?.name ? user.name.split(" ")[0] : "";
+
+  const { images, fetchGeneratedImages } = useApiStore();
+
+  // Fetch images on mount
+  useEffect(() => {
+    fetchGeneratedImages();
+  }, [fetchGeneratedImages]);
+
+  // Filter images based on active session
+  const displayedImages = activeSession
+    ? images.filter((img) => img.session === activeSession)
+    : images;
 
   return (
     <div className="flex flex-col flex-1 h-screen bg-zinc-950 text-white">
@@ -31,7 +50,7 @@ export default function GeneratorPage() {
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 text-white border-zinc-700">
-              <SelectItem value="Gemini" defaultChecked>
+              <SelectItem value="gemini-ai" defaultChecked>
                 <div className="flex items-center gap-2">
                   <svg
                     width="250"
@@ -104,7 +123,7 @@ export default function GeneratorPage() {
                 </div>
               </SelectItem>
 
-              <SelectItem value="Runway">
+              <SelectItem value="runway">
                 <div className="flex items-center gap-2">
                   <img
                     src="https://runwayml.com/icon.png?354f8c2b5139d556"
@@ -186,17 +205,29 @@ export default function GeneratorPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto flex items-center justify-center px-4">
-        {!hasPrompt && (
-          <h1 className="text-xl md:text-2xl font-medium text-center max-w-xl text-zinc-200">
-            Hi <span className="font-semibold">{firstName}</span>, what do you
-            want to create today?
-          </h1>
-        )}
-      </div>
+      <div
+        className="flex-1 overflow-y-auto flex flex-col items-start px-4 pt-6
+    [scrollbar-width:thin] 
+    [scrollbar-color:#3f3f46_#18181b] 
+    [&::-webkit-scrollbar]:w-2
+    [&::-webkit-scrollbar-track]:bg-zinc-900
+    [&::-webkit-scrollbar-thumb]:bg-zinc-700 
+    [&::-webkit-scrollbar-thumb]:rounded-full"
+      >
+        <div className="text-white font-bold text-xl mb-2 w-full text-center">
+          <h1>Hi {firstName}, turn your imagination into creativity.</h1>
+        </div>
 
-      {/* Prompt Input */}
-      <PromptInput />
+        {/* Prompt Input */}
+        <PromptInput selectedModel={model} />
+
+        {/* ✅ Pass filtered images for the active session */}
+        <GeneratedImages images={displayedImages} />
+
+        {/* Render Images from DB */}
+        {/* <GeneratedImages /> */}
+        {user && !user.googleId && !user.emailVerified && <VerifyEmail />}
+      </div>
     </div>
   );
 }

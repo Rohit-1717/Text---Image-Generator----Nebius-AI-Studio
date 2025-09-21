@@ -9,7 +9,12 @@ interface User {
   id: string;
   name: string;
   email: string;
-  avatar?: string; // 👈 optional avatar from Google OAuth
+  avatar?: string;
+  createdAt?: string;
+  lastLogin?: string;
+  plan?: string;
+  emailVerified?: boolean;
+  googleId?: string;
 }
 
 interface AuthState {
@@ -25,9 +30,18 @@ interface AuthState {
   loginWithGoogle: () => void;
   logout: () => Promise<void>;
   fetchMe: () => Promise<void>;
+
+  sendVerificationEmail: () => Promise<void>;
+  verifyEmailToken?: (token: string) => Promise<void>;
+
+  updateUser: (data: {
+    name?: string;
+    password?: string;
+    avatar?: string | File;
+  }) => Promise<void>;
 }
 
-const useAuthStore = create<AuthState>((set) => ({
+const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: false,
   error: null,
@@ -85,6 +99,60 @@ const useAuthStore = create<AuthState>((set) => ({
     await axios.post(`${API_URL}/api/auth/logout`);
     set({ user: null });
     toast.info("Logged out");
+  },
+
+  sendVerificationEmail: async () => {
+    try {
+      await axios.post(`${API_URL}/api/auth/email/send-verification`);
+      toast.success("Verification email sent! Check your inbox.");
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message || "Failed to send verification email"
+      );
+    }
+  },
+
+  verifyEmailToken: async (token: string) => {
+    try {
+      await axios.get(`${API_URL}/api/auth/email/verify/${token}`);
+      toast.success("Email verified successfully!");
+      await get().fetchMe(); // refresh user data after verification
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Email verification failed");
+    }
+  },
+
+  updateUser: async (data) => {
+    try {
+      set({ loading: true, error: null });
+
+      let payload: any = data;
+      let headers = {};
+
+      // Narrow avatar type for TypeScript
+      if (data.avatar && data.avatar instanceof File) {
+        payload = new FormData();
+        if (data.name) payload.append("name", data.name);
+        if (data.password) payload.append("password", data.password);
+        payload.append("avatar", data.avatar);
+
+        headers = { "Content-Type": "multipart/form-data" };
+      }
+
+      const res = await axios.put(`${API_URL}/api/user/update-user`, payload, {
+        withCredentials: true,
+        headers,
+      });
+
+      set({ user: { ...get().user, ...res.data.data }, loading: false });
+      toast.success(res.data.message || "Profile updated successfully!");
+    } catch (err: any) {
+      set({
+        error: err.response?.data?.message || "Update failed",
+        loading: false,
+      });
+      toast.error(err.response?.data?.message || "Update failed");
+    }
   },
 }));
 

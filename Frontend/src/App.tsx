@@ -8,6 +8,9 @@ import Login from "./auth/login/Login";
 import Signup from "./auth/signup/Signup";
 import Dashboard from "./components/dashboard/Dashboard";
 import ProtectedRoute from "./utils/protected_routes";
+import UserProfile from "./components/profile/UserProfile";
+import UserSettings from "./components/settings/UserSettings";
+import UserFaqs from "./components/userFaqs/UserFaqs";
 
 function App() {
   return (
@@ -19,10 +22,13 @@ function App() {
       <Route path="/about" element={<About />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/userFaqs" element={<UserFaqs />} />
 
       {/* 🔐 Protected Routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/settings" element={<UserSettings />} />
       </Route>
     </Routes>
   );

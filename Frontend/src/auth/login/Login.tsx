@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import * as z from "zod";
 
 import Footer from "@/components/footer/Footer";
@@ -24,6 +25,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function Login() {
   const { login, loginWithGoogle, loading, user } = useAuthStore();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -118,7 +120,20 @@ export default function Login() {
                 <Label htmlFor="password" className="block text-sm">
                   Password
                 </Label>
-                <Input type="password" {...register("password")} />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                    onClick={() => setShowPassword((prev: boolean) => !prev)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}

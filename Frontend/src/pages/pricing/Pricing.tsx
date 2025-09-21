@@ -23,9 +23,9 @@ export default function Pricing() {
               Simple, Transparent Pricing
             </h1>
             <p>
-              Choose a plan that scales with your creativity. Our AI image
-              generation platform offers flexible tiers to help you create,
-              customize, and innovate without limits.
+              Choose a plan that scales with your creativity. Unlock access to
+              the most powerful AI models including Gemini, OpenAI, Midjourney,
+              Runway, X-ai, Nebius, and even 3D image generation.
             </p>
           </div>
 
@@ -48,7 +48,7 @@ export default function Pricing() {
                 <ul className="list-outside space-y-3 text-sm">
                   {[
                     "50 AI-generated images / month",
-                    "Access to Basic AI Models",
+                    "Access to Gemini & Nebius (basic)",
                     "Community Support",
                   ].map((item, index) => (
                     <li key={index} className="flex items-center gap-2">
@@ -88,10 +88,9 @@ export default function Pricing() {
                   <ul className="list-outside space-y-3 text-sm">
                     {[
                       "Unlimited AI-generated images",
-                      "Access to Premium AI Models",
-                      "Advanced Style Options (Anime, Realism, Abstract)",
+                      "Full access: Gemini, OpenAI, Runway-AI",
+                      "Advanced Styles: Anime, Realism, Abstract",
                       "Priority Rendering",
-                      "Access to Creative Community",
                       "Custom Prompts & Filters",
                       "Download in HD",
                       "Regular Feature Updates",
@@ -128,6 +127,8 @@ export default function Pricing() {
                 <ul className="list-outside space-y-3 text-sm">
                   {[
                     "Everything in Pro Plan",
+                    "Access to Midjourney & X-ai models",
+                    "3D Image Generation",
                     "Team Collaboration Tools",
                     "Shared Workspace",
                     "Early Access to Beta Features",
