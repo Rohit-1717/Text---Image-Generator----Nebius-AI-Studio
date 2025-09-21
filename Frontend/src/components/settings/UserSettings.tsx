@@ -23,8 +23,8 @@ function UserSettings() {
   const initialTab = params.get("tab") || "profile";
 
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [fullName, setFullName] = useState("User Name");
-  const [avatar] = useState("https://i.pravatar.cc/300");
+  // const [fullName, setFullName] = useState("User Name");
+  // const [avatar] = useState("https://i.pravatar.cc/300");
   const [loading, setLoading] = useState(false);
 
   const tabs = [
@@ -60,11 +60,7 @@ function UserSettings() {
     switch (activeTab) {
       case "profile":
         return (
-          <ProfileTab
-            fullName={fullName}
-            setFullName={setFullName}
-            avatar={avatar}
-          />
+          <ProfileTab/>
         );
       case "billing":
         return <BillingTab />;
