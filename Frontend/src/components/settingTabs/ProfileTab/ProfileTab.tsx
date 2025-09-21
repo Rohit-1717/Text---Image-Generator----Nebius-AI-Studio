@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Dispatch, SetStateAction } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,22 +22,14 @@ import {
 import useAuthStore from "@/store/useAuthStore";
 import { toast } from "sonner";
 
-// ✅ Props interface
-interface ProfileTabProps {
-  fullName: string;
-  setFullName: Dispatch<SetStateAction<string>>;
-  avatar: string;
-}
-
-export const ProfileTab: React.FC<ProfileTabProps> = ({
-  fullName,
-  setFullName,
-  avatar,
-}) => {
+export const ProfileTab: React.FC = () => {
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
 
-  const [localAvatar, setLocalAvatar] = useState(avatar);
+  const [fullName, setFullName] = useState(user?.name || "");
+  const [avatar, setAvatar] = useState(
+    user?.avatar || "https://i.pravatar.cc/300"
+  );
   const [passwords, setPasswords] = useState({
     oldPassword: "",
     newPassword: "",
@@ -53,9 +45,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
   if (!user) return null;
 
+  // Sync local state when user changes
   useEffect(() => {
-    setLocalAvatar(avatar);
-  }, [avatar]);
+    setFullName(user.name || "");
+    setAvatar(user.avatar || "https://i.pravatar.cc/300");
+  }, [user]);
 
   const handleUpdateName = async () => {
     if (!fullName.trim()) {
@@ -75,12 +69,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
   const handleUpdateAvatar = async (file: File) => {
     if (!file) return;
-
     setLoading(true);
     try {
       await updateUser({ avatar: file, name: fullName });
       toast.success("Avatar updated successfully!");
-      setLocalAvatar(URL.createObjectURL(file)); // optional: show preview
+      setAvatar(URL.createObjectURL(file)); // Show preview immediately
     } catch (err: any) {
       toast.error(err.message || "Failed to update avatar");
     } finally {
@@ -125,9 +118,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
       {/* Avatar */}
       <div className="flex items-center gap-4">
-        {localAvatar ? (
+        {avatar ? (
           <img
-            src={localAvatar}
+            src={avatar}
             alt="Avatar"
             className="h-16 w-16 rounded-full object-cover"
           />
