@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -7,12 +5,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 import * as z from "zod";
 
-import Footer from "@/components/footer/Footer";
 import NavBar from "@/components/nav/Navbar";
+import Footer from "@/components/footer/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+
+import { Skeleton } from "@/components/ui/skeleton";
+
 import useAuthStore from "@/store/useAuthStore";
+import { CopyButton } from "@/components/copyButton/CopyButton";
 
 // -------- Form Schema --------
 const loginSchema = z.object({
@@ -22,6 +25,80 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+
+// ---------- Test Credentials Card Component ----------
+function TestCredentialsCard() {
+  const [showCard, setShowCard] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const TEST_EMAIL = import.meta.env.VITE_TEST_EMAIL || "test@morphix.ai";
+  const TEST_PASSWORD = import.meta.env.VITE_TEST_PASSWORD || "password123";
+
+  // Show card automatically
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+      setShowCard(true);
+    }, 1000); // 2s skeleton loader
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!showCard) return null;
+
+  return (
+    <div className="fixed top-20 right-4 z-50 w-[90%] max-w-xs sm:max-w-sm md:max-w-[20rem]">
+      <Card className="relative p-3 sm:p-4 space-y-2 sm:space-y-3 shadow-md">
+        {/* Close Button */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className="absolute top-2 right-2 p-1"
+          onClick={() => setShowCard(false)}
+        >
+          <span className="sr-only">Close</span>✕
+        </Button>
+
+        {loading ? (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Loading test credentials...</p>
+            <Skeleton className="h-3 w-40 sm:h-4 sm:w-48" />
+            <Skeleton className="h-3 w-32 sm:h-4 sm:w-40" />
+          </div>
+        ) : (
+          <>
+            <p className="text-sm font-medium">You can test Morphix using:</p>
+
+            {/* Email */}
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs">Email</Label>
+              <div className="flex items-center justify-between gap-2 border border-input rounded-md px-2 sm:px-3 py-1.5 sm:py-2 bg-background">
+                <span className="truncate text-sm">{TEST_EMAIL}</span>
+                <CopyButton text={TEST_EMAIL} />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="flex flex-col gap-1">
+              <Label className="text-xs">Password</Label>
+              <div className="flex items-center justify-between gap-2 border border-input rounded-md px-2 sm:px-3 py-1.5 sm:py-2 bg-background">
+                <span className="truncate text-sm">{TEST_PASSWORD}</span>
+                <CopyButton text={TEST_PASSWORD} />
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground mt-1">
+              Or sign in quickly with{" "}
+              <span className="font-medium">Google ✨</span>
+            </p>
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// ---------- Main Login Component ----------
 export default function Login() {
   const { login, loginWithGoogle, loading, user } = useAuthStore();
   const navigate = useNavigate();
@@ -31,7 +108,7 @@ export default function Login() {
     resolver: zodResolver(loginSchema),
   });
 
-  // 🔥 Redirect once user is set
+  // Redirect once user is logged in
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
@@ -40,12 +117,14 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     await login(data);
-    // no manual navigate — useEffect will handle it
   };
 
   return (
     <>
       <NavBar />
+      {/* Test Credentials Card */}
+      <TestCredentialsCard />
+
       <section className="flex min-h-screen bg-zinc-50 px-4 py-16 md:py-32 dark:bg-transparent">
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -66,14 +145,15 @@ export default function Login() {
               <p>Welcome back! Sign in to continue</p>
             </div>
 
+            {/* Google OAuth */}
             <div className="mt-6">
-              {/* Google OAuth */}
               <Button
                 type="button"
                 variant="outline"
                 className="w-full"
                 onClick={loginWithGoogle}
               >
+                {" "}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="0.98em"
@@ -97,10 +177,11 @@ export default function Login() {
                     d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
                   />
                 </svg>
-                <span>Google</span>
+                Sign in with Google
               </Button>
             </div>
 
+            {/* Divider */}
             <div className="my-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
               <hr className="border-dashed" />
               <span className="text-muted-foreground text-xs">
@@ -109,6 +190,7 @@ export default function Login() {
               <hr className="border-dashed" />
             </div>
 
+            {/* Email / Password */}
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="block text-sm">
@@ -128,7 +210,7 @@ export default function Login() {
                   <button
                     type="button"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                    onClick={() => setShowPassword((prev: boolean) => !prev)}
+                    onClick={() => setShowPassword((prev) => !prev)}
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
