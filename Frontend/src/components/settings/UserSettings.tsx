@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,7 +24,7 @@ function UserSettings() {
 
   const [activeTab, setActiveTab] = useState(initialTab);
   const [fullName, setFullName] = useState("User Name");
-  const [avatar, setAvatar] = useState("https://i.pravatar.cc/300");
+  const [avatar] = useState("https://i.pravatar.cc/300");
   const [loading, setLoading] = useState(false);
 
   const tabs = [

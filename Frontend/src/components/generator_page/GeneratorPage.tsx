@@ -20,7 +20,7 @@ interface GeneratorPageProps {
 
 export default function GeneratorPage({
   activeSession,
-  setActiveSession,
+  // setActiveSession,
 }: GeneratorPageProps) {
   const { user } = useAuthStore();
   const [model, setModel] = useState("gemini-ai");

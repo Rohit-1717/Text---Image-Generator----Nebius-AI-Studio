@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useApiStore } from "@/store/useApiStore";
 import { Skeleton } from "@/components/ui/skeleton";
