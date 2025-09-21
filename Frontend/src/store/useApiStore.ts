@@ -83,7 +83,26 @@ export const useApiStore = create<ApiState>((set, get) => ({
   activeSession: null,
 
   // ✅ Initialize user session: last session or create one
-  initUserSession: async (userId: string) => {
+  // initUserSession: async (userId: string) => {
+  //   try {
+  //     await get().fetchSessions();
+  //     const sessions = get().sessions;
+
+  //     if (sessions.length > 0) {
+  //       // Select the last (newest) session
+  //       set({ activeSession: sessions[0]._id });
+  //     } else {
+  //       // No session exists, create one automatically
+  //       const newSession = await get().createSession();
+  //       if (newSession) set({ activeSession: newSession._id });
+  //     }
+  //   } catch (err) {
+  //     const message = handleApiError(err, "initUserSession");
+  //     set({ error: message });
+  //   }
+  // },
+
+  initUserSession: async () => {
     try {
       await get().fetchSessions();
       const sessions = get().sessions;
@@ -101,7 +120,6 @@ export const useApiStore = create<ApiState>((set, get) => ({
       set({ error: message });
     }
   },
-
   generateImage: async (model, prompt, file, sessionId) => {
     const authUser = useAuthStore.getState().user;
     if (!authUser) {

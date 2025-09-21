@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Dispatch, SetStateAction } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,14 +22,22 @@ import {
 import useAuthStore from "@/store/useAuthStore";
 import { toast } from "sonner";
 
+// ✅ Props interface
+interface ProfileTabProps {
+  fullName: string;
+  setFullName: Dispatch<SetStateAction<string>>;
+  avatar: string;
+}
 
-
-export const ProfileTab: React.FC = () => {
+export const ProfileTab: React.FC<ProfileTabProps> = ({
+  fullName,
+  setFullName,
+  avatar,
+}) => {
   const user = useAuthStore((state) => state.user);
   const updateUser = useAuthStore((state) => state.updateUser);
 
-  const [fullName, setFullName] = useState(user?.name || "");
-  const [avatar, setAvatar] = useState(user?.avatar || "");
+  const [localAvatar, setLocalAvatar] = useState(avatar);
   const [passwords, setPasswords] = useState({
     oldPassword: "",
     newPassword: "",
@@ -46,11 +54,8 @@ export const ProfileTab: React.FC = () => {
   if (!user) return null;
 
   useEffect(() => {
-    if (user) {
-      setFullName(user.name || "");
-      setAvatar(user.avatar || "");
-    }
-  }, [user]);
+    setLocalAvatar(avatar);
+  }, [avatar]);
 
   const handleUpdateName = async () => {
     if (!fullName.trim()) {
@@ -75,6 +80,7 @@ export const ProfileTab: React.FC = () => {
     try {
       await updateUser({ avatar: file, name: fullName });
       toast.success("Avatar updated successfully!");
+      setLocalAvatar(URL.createObjectURL(file)); // optional: show preview
     } catch (err: any) {
       toast.error(err.message || "Failed to update avatar");
     } finally {
@@ -119,9 +125,9 @@ export const ProfileTab: React.FC = () => {
 
       {/* Avatar */}
       <div className="flex items-center gap-4">
-        {avatar ? (
+        {localAvatar ? (
           <img
-            src={avatar}
+            src={localAvatar}
             alt="Avatar"
             className="h-16 w-16 rounded-full object-cover"
           />
