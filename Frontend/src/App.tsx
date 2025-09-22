@@ -11,6 +11,8 @@ import ProtectedRoute from "./utils/protected_routes";
 import UserProfile from "./components/profile/UserProfile";
 import UserSettings from "./components/settings/UserSettings";
 import UserFaqs from "./components/userFaqs/UserFaqs";
+import PrivacyPolicy from "./policy/PrivacyPolicy";
+import TermsOfService from "./policy/TermsOfService";
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/userFaqs" element={<UserFaqs />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
 
       {/* 🔐 Protected Routes */}
       <Route element={<ProtectedRoute />}>
