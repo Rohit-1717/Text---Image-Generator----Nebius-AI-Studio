@@ -27,6 +27,7 @@ const app = express();
 // Parse cookies
 app.use(cookieParser());
 
+
 // Trust proxy (needed for secure cookies behind proxies)
 if (process.env.TRUST_PROXY)
   app.set("trust proxy", parseInt(process.env.TRUST_PROXY));

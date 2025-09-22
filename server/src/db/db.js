@@ -20,7 +20,6 @@ export const connectDB = async () => {
 
   await mongoose.connect(uri, {
     serverSelectionTimeoutMS: 10000,
-    // tls true is enforced by the connection string (?tls=true)
-    // retryWrites enabled by connection string
+    family: 4,
   });
 };
